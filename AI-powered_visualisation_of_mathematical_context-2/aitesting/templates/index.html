@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Video Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <div class="gradient-bg text-white py-8">
+        <div class="container mx-auto px-4">
+            <h1 class="text-4xl font-bold text-center">🎬 Math Video Generator</h1>
+            <p class="text-center mt-2 text-xl">Create Educational Math Videos with AI + Manim</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Video Generation Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-2xl font-bold mb-6">📝 Create Your Math Video</h2>
+                    
+                    <!-- Setup Status -->
+                    <div id="setupStatus" class="mb-6"></div>
+                    
+                    <form id="videoForm" class="space-y-6">
+                        <!-- Topic Input -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Math Topic/Problem
+                            </label>
+                            <textarea 
+                                id="topic" 
+                                rows="4" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Example: Explain calculus derivatives with visual examples showing tangent lines and rates of change"
+                                required
+                            ></textarea>
+                        </div>
+
+                        <!-- Settings Row -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Difficulty
+                                </label>
+                                <select id="difficulty" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate" selected>Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Duration (seconds)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    id="duration" 
+                                    value="45" 
+                                    min="15" 
+                                    max="120"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Quality
+                                </label>
+                                <select id="quality" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="low_quality">Low (480p)</option>
+                                    <option value="medium_quality" selected>Medium (720p)</option>
+                                    <option value="high_quality">High (1080p)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <button 
+                            type="submit" 
+                            id="generateBtn"
+                            class="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
+                        >
+                            🚀 Generate Video
+                        </button>
+                    </form>
+
+                    <!-- Progress Section -->
+                    <div id="progressSection" class="mt-6 hidden">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-3">🎬 Generation Progress</h3>
+                            <div id="progressBar" class="w-full bg-gray-200 rounded-full h-2.5 mb-3">
+                                <div id="progressFill" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <p id="progressText" class="text-sm text-gray-600">Initializing...</p>
+                        </div>
+                    </div>
+
+                    <!-- Result Section -->
+                    <div id="resultSection" class="mt-6 hidden">
+                        <!-- Success/Error messages will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Example Topics -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-bold mb-4">💡 Example Topics</h3>
+                    <div class="space-y-2">
+                        <button onclick="setTopic('Pythagorean theorem proof with visual demonstration')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                            📐 Pythagorean Theorem
+                        </button>
+                        <button onclick="setTopic('Quadratic function graphing and parabola properties')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                            📈 Quadratic Functions
+                        </button>
+                        <button onclick="setTopic('Derivatives and tangent lines with rate of change')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                            📊 Derivatives
+                        </button>
+                        <button onclick="setTopic('Integration as area under curve visualization')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                            🔢 Integration
+                        </button>
+                        <button onclick="setTopic('Trigonometric unit circle and sine cosine waves')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                            🔄 Trigonometry
+                        </button>
+                        <button onclick="setTopic('Matrix multiplication geometric visualization')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                            🔲 Matrix Operations
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Videos -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-bold mb-4">📊 Recent Videos</h3>
+                    <div id="videosList">
+                        <p class="text-gray-500 text-sm">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTaskId = null;
+        let pollInterval = null;
+
+        // Check setup on page load
+        window.onload = function() {
+            checkSetup();
+            loadRecentVideos();
+        };
+
+        function checkSetup() {
+            axios.get('/api/setup')
+                .then(response => {
+                    const status = response.data;
+                    const statusDiv = document.getElementById('setupStatus');
+                    
+                    if (status.status === 'ok') {
+                        statusDiv.innerHTML = `
+                            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                                ✅ ${status.message}
+                            </div>
+                        `;
+                    } else {
+                        statusDiv.innerHTML = `
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                                ❌ ${status.message}
+                                <br><small>Please check your .env file and GitHub token configuration.</small>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Setup check failed:', error);
+                });
+        }
+
+        function setTopic(topic) {
+            document.getElementById('topic').value = topic;
+        }
+
+        function loadRecentVideos() {
+            axios.get('/api/videos')
+                .then(response => {
+                    const videos = response.data;
+                    const videosDiv = document.getElementById('videosList');
+                    
+                    if (videos.length === 0) {
+                        videosDiv.innerHTML = '<p class="text-gray-500 text-sm">No videos generated yet.</p>';
+                        return;
+                    }
+                    
+                    videosDiv.innerHTML = videos.slice(0, 5).map(video => `
+                        <div class="border-b border-gray-200 py-2 last:border-b-0">
+                            <p class="text-sm font-medium">${video.name}</p>
+                            <p class="text-xs text-gray-500">${(video.size / 1024 / 1024).toFixed(1)} MB</p>
+                            <button onclick="downloadVideo('${video.path}')" class="text-xs text-blue-600 hover:text-blue-800">
+                                📥 Download
+                            </button>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Failed to load videos:', error);
+                });
+        }
+
+        function downloadVideo(path) {
+            window.open(`/api/download/${path}`, '_blank');
+        }
+
+        document.getElementById('videoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const topic = document.getElementById('topic').value.trim();
+            if (!topic) {
+                alert('Please enter a math topic.');
+                return;
+            }
+            
+            const data = {
+                topic: topic,
+                difficulty: document.getElementById('difficulty').value,
+                duration: parseInt(document.getElementById('duration').value),
+                quality: document.getElementById('quality').value
+            };
+            
+            // Show progress section
+            document.getElementById('progressSection').classList.remove('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('generateBtn').innerHTML = '⏳ Generating...';
+            
+            // Start generation
+            axios.post('/api/generate', data)
+                .then(response => {
+                    currentTaskId = response.data.task_id;
+                    pollProgress();
+                })
+                .catch(error => {
+                    console.error('Generation failed:', error);
+                    showError('Failed to start generation: ' + error.message);
+                    resetForm();
+                });
+        });
+
+        function pollProgress() {
+            if (!currentTaskId) return;
+            
+            pollInterval = setInterval(() => {
+                axios.get(`/api/status/${currentTaskId}`)
+                    .then(response => {
+                        const status = response.data;
+                        updateProgress(status);
+                        
+                        if (status.status === 'completed') {
+                            clearInterval(pollInterval);
+                            showSuccess(status);
+                            resetForm();
+                            loadRecentVideos();
+                        } else if (status.status === 'failed') {
+                            clearInterval(pollInterval);
+                            showError(status.message);
+                            resetForm();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Status check failed:', error);
+                        clearInterval(pollInterval);
+                        resetForm();
+                    });
+            }, 2000);
+        }
+
+        function updateProgress(status) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressFill.style.width = status.progress + '%';
+            progressText.textContent = status.message;
+        }
+
+        function showSuccess(status) {
+            const resultDiv = document.getElementById('resultSection');
+            resultDiv.innerHTML = `
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    <h4 class="font-bold">✅ Video Generated Successfully!</h4>
+                    <p class="text-sm mt-1">📁 Location: ${status.video_path}</p>
+                    <button onclick="downloadVideo('${status.video_path}')" class="mt-2 bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">
+                        📥 Download Video
+                    </button>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        function showError(message) {
+            const resultDiv = document.getElementById('resultSection');
+            resultDiv.innerHTML = `
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <h4 class="font-bold">❌ Generation Failed</h4>
+                    <p class="text-sm mt-1">${message}</p>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        function resetForm() {
+            document.getElementById('generateBtn').disabled = false;
+            document.getElementById('generateBtn').innerHTML = '🚀 Generate Video';
+            currentTaskId = null;
+        }
+    </script>
+</body>
+</html>
